@@ -5,25 +5,25 @@ import time
 import sys
 
 def fetch_events():
-    """Holt Events von der Quelle"""
+    # holt events von der quelle
     try:
         response = requests.get('http://assessment:8080/v1/dataset', timeout=30)
-        response.raise_for_status()  # Wirft Exception bei HTTP-Fehlern
+        response.raise_for_status()  # wirft exception bei fehlern
         return response.json()['events']
     except requests.exceptions.RequestException as e:
         print(f"Fehler beim Abrufen der Events: {e}")
         sys.exit(1)
 
 def calculate_consumption(events):
-    """Berechnet Nutzungszeit pro Kunde"""
-    # Sammle Start- und Stop-Events pro Workload
+    # berechnet nutzungszeit pro kunde
+    # sammle start und stop events pro workload
     workload_events = defaultdict(list)
     
     for event in events:
         key = (event['customerId'], event['workloadId'])
         workload_events[key].append(event)
     
-    # Berechne Nutzungszeit pro Kunde
+    # berechne nutzungszeit pro kunde
     customer_times = defaultdict(int)
     
     for (customer_id, workload_id), events in workload_events.items():
@@ -40,7 +40,7 @@ def calculate_consumption(events):
             duration = stop_time - start_time
             customer_times[customer_id] += duration
     
-    # Formatierung für das Ergebnis
+    # formatierung für ergebnis
     result = []
     for customer_id, consumption in customer_times.items():
         result.append({
@@ -51,7 +51,7 @@ def calculate_consumption(events):
     return result
 
 def send_results(results):
-    """Sendet Ergebnisse an das Referenzsystem"""
+    # sendet ergebnisse an referenzsystem
     payload = {'result': results}
     response = requests.post(
         'http://assessment:8080/v1/result', 
@@ -63,18 +63,18 @@ def send_results(results):
 def main():
     print("Starte Berechnung...")
     
-    # 1. Events abrufen
+    # events abrufen
     events = fetch_events()
     print(f"Empfange {len(events)} Events")
     
-    # 2. Nutzungszeit berechnen
+    # nutzungszeit berechnen
     results = calculate_consumption(events)
     print(f"Berechne Nutzungszeit für {len(results)} Kunden")
     
-    # 3. Ergebnisse senden
+    # ergebnisse senden
     status_code = send_results(results)
     print(f"Ergebnisse gesendet - Status: {status_code}")
 
-# HIER IST DIE KORRIGIERTE ZEILE:
+
 if __name__ == "__main__":
     main()
